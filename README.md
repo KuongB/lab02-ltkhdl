@@ -73,8 +73,15 @@ I performed extensive EDA (`01_data_exploration.ipynb`) to answer critical busin
 ### 5.1. Feature Engineering (NumPy)
 The preprocessing pipeline (`02_preprocessing.ipynb`) transforms raw CSV data into a clean, numerical matrix $X$:
 
+### 5.1. Feature Engineering (NumPy)
+The preprocessing pipeline (`02_preprocessing.ipynb`) transforms raw CSV data into a clean, numerical matrix $X$:
+
 1.  **Log-Transformation**: The target variable `price` is highly right-skewed. I apply:
-    $$ y' = \log(y + 1) $$
+
+    $$
+    y' = \log(y + 1)
+    $$
+
     This stabilizes variance and makes the data conform better to the Gaussian assumptions of Linear Regression.
 
 2.  **Interaction Terms**: Capturing non-linear relationships:
@@ -85,7 +92,11 @@ The preprocessing pipeline (`02_preprocessing.ipynb`) transforms raw CSV data in
 
 4.  **Standard Scaling (Z-Score)**:
     For every feature $j$:
-    $$ x_{ij}' = \frac{x_{ij} - \mu_j}{\sigma_j} $$
+
+    $$
+    x_{ij}' = \frac{x_{ij} - \mu_j}{\sigma_j}
+    $$
+
     This ensures uniform gradients during optimization.
 
 ### 5.2. Model 1: Ordinary Least Squares (OLS)
@@ -93,20 +104,37 @@ The preprocessing pipeline (`02_preprocessing.ipynb`) transforms raw CSV data in
 Linear Regression fits a linear model with coefficients $W = (w_0, \dots, w_p)$ to minimize the Residual Sum of Squares (RSS) between the observed targets in the dataset and the targets predicted by the linear approximation.
 
 The objective function (Cost Function) is defined as:
-$$ J(W) = ||Y - \hat{Y}||^2_2 = ||Y - XW||^2_2 = \sum_{i=1}^n (y_i - x_i^T W)^2 $$
+
+$$
+J(W) = ||Y - \hat{Y}||^2_2 = ||Y - XW||^2_2 = \sum_{i=1}^n (y_i - x_i^T W)^2
+$$
 
 **Mathematical Derivation**:
 To find the optimal $W$ that minimizes $J(W)$, I take the gradient with respect to $W$ and set it to zero (convex optimization):
 
 1.  **Expand the term**:
-    $$ J(W) = (Y - XW)^T (Y - XW) = Y^TY - 2W^TX^TY + W^TX^TXW $$
+    
+    $$
+    J(W) = (Y - XW)^T (Y - XW) = Y^TY - 2W^TX^TY + W^TX^TXW
+    $$
+
 2.  **Compute the Gradient** $\nabla_W J(W)$:
-    $$ \frac{\partial J(W)}{\partial W} = -2X^TY + 2X^TXW $$
+    
+    $$
+    \frac{\partial J(W)}{\partial W} = -2X^TY + 2X^TXW
+    $$
+
 3.  **Set to Zero**:
-    $$ -2X^TY + 2X^TXW = 0 \implies X^TXW = X^TY $$
+    
+    $$
+    -2X^TY + 2X^TXW = 0 \implies X^TXW = X^TY
+    $$
 
 This yields the **Normal Equation**:
-$$ W = (X^T X)^{-1} X^T Y $$
+
+$$
+W = (X^T X)^{-1} X^T Y
+$$
 
 **NumPy Implementation Details**:
 While the analytical solution involves the matrix inverse $(X^T X)^{-1}$, calculating it directly is computationally expensive ($O(n^3)$) and numerically unstable when $X$ has multicollinearity (making $X^TX$ close to singular).
@@ -122,31 +150,40 @@ Suppose I have 3 data points $(x, y)$: $(1, 2), (2, 3), (3, 5)$.
 I want to fit $y = w_0 + w_1 x$.
 
 1.  **Construct Matrices**:
+    
     $$
     X = \begin{bmatrix} 1 & 1 \\ 1 & 2 \\ 1 & 3 \end{bmatrix}, \quad Y = \begin{bmatrix} 2 \\ 3 \\ 5 \end{bmatrix}
     $$
+    
     *(Note: First column of X is 1s for the intercept)*
 
 2.  **Compute $X^T X$**:
+    
     $$
     X^T X = \begin{bmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \end{bmatrix} \begin{bmatrix} 1 & 1 \\ 1 & 2 \\ 1 & 3 \end{bmatrix} = \begin{bmatrix} 3 & 6 \\ 6 & 14 \end{bmatrix}
     $$
 
 3.  **Compute $X^T Y$**:
+    
     $$
     X^T Y = \begin{bmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \end{bmatrix} \begin{bmatrix} 2 \\ 3 \\ 5 \end{bmatrix} = \begin{bmatrix} 10 \\ 23 \end{bmatrix}
     $$
 
 4.  **Solve Normal Equation** $(X^T X) W = X^T Y$:
+    
     $$
     \begin{bmatrix} 3 & 6 \\ 6 & 14 \end{bmatrix} \begin{bmatrix} w_0 \\ w_1 \end{bmatrix} = \begin{bmatrix} 10 \\ 23 \end{bmatrix}
     $$
+    
     Solving this system yields $w_0 = -1/3, w_1 = 11/6$.
     Equation: $y = -0.33 + 1.83x$.
 
 ### 5.3. Model 2: Lasso Regression
 **Objective**: Minimize SSE + L1 Penalty to induce sparsity (feature selection).
-$$ J(W) = \frac{1}{2n} ||Y - XW||^2_2 + \lambda ||W||_1 $$
+
+$$
+J(W) = \frac{1}{2n} ||Y - XW||^2_2 + \lambda ||W||_1
+$$
 
 Lasso introduces a regularization parameter $\lambda$ that penalizes the absolute magnitude of the regression coefficients. This encourages simple, sparse models by determining which features are truly important.
 
@@ -171,17 +208,28 @@ I implemented the following metrics using pure NumPy vectorization:
 
 **1. Mean Squared Error (MSE)**
 The average squared difference between the estimated values and the actual value.
-$$ \text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 $$
+
+$$
+\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2
+$$
+
 *NumPy Code*: `np.mean((Y - Y_pred) ** 2)`
 
 **2. R-squared ($R^2$ Score)**
 Represents the proportion of variance for a dependent variable that's explained by an independent variable.
-$$ R^2 = 1 - \frac{\text{SS}_{res}}{\text{SS}_{tot}} = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2} $$
+
+$$
+R^2 = 1 - \frac{\text{SS}_{res}}{\text{SS}_{tot}} = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
+$$
+
 *NumPy Code*: `1 - (np.sum((Y - Y_pred)**2) / np.sum((Y - np.mean(Y))**2))`
 
 **3. Root Mean Squared Error (RMSE)**
 Calculated on the *original scale* (after exponentiating the log-predictions) to give a dollar-value error interpretation.
-$$ \text{RMSE} = \sqrt{\text{MSE}(e^Y-1, e^{\hat{Y}}-1)} $$
+
+$$
+\text{RMSE} = \sqrt{\text{MSE}(e^Y-1, e^{\hat{Y}}-1)}
+$$
 
 ## 6. NumPy Techniques Used
 This project showcases advanced NumPy capabilities:
