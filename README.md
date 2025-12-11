@@ -152,7 +152,16 @@ I want to fit $y = w_0 + w_1 x$.
 1.  **Construct Matrices**:
     
     $$
-    X = \begin{bmatrix} 1 & 1 \\ 1 & 2 \\ 1 & 3 \end{bmatrix}, \quad Y = \begin{bmatrix} 2 \\ 3 \\ 5 \end{bmatrix}
+    X = \begin{bmatrix}
+    1 & 1 \\
+    1 & 2 \\
+    1 & 3
+    \end{bmatrix}, \quad
+    Y = \begin{bmatrix}
+    2 \\
+    3 \\
+    5
+    \end{bmatrix}
     $$
     
     *(Note: First column of X is 1s for the intercept)*
@@ -160,19 +169,54 @@ I want to fit $y = w_0 + w_1 x$.
 2.  **Compute $X^T X$**:
     
     $$
-    X^T X = \begin{bmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \end{bmatrix} \begin{bmatrix} 1 & 1 \\ 1 & 2 \\ 1 & 3 \end{bmatrix} = \begin{bmatrix} 3 & 6 \\ 6 & 14 \end{bmatrix}
+    X^T X = \begin{bmatrix}
+    1 & 1 & 1 \\
+    1 & 2 & 3
+    \end{bmatrix}
+    \begin{bmatrix}
+    1 & 1 \\
+    1 & 2 \\
+    1 & 3
+    \end{bmatrix}
+    = \begin{bmatrix}
+    3 & 6 \\
+    6 & 14
+    \end{bmatrix}
     $$
 
 3.  **Compute $X^T Y$**:
     
     $$
-    X^T Y = \begin{bmatrix} 1 & 1 & 1 \\ 1 & 2 & 3 \end{bmatrix} \begin{bmatrix} 2 \\ 3 \\ 5 \end{bmatrix} = \begin{bmatrix} 10 \\ 23 \end{bmatrix}
+    X^T Y = \begin{bmatrix}
+    1 & 1 & 1 \\
+    1 & 2 & 3
+    \end{bmatrix}
+    \begin{bmatrix}
+    2 \\
+    3 \\
+    5
+    \end{bmatrix}
+    = \begin{bmatrix}
+    10 \\
+    23
+    \end{bmatrix}
     $$
 
 4.  **Solve Normal Equation** $(X^T X) W = X^T Y$:
     
     $$
-    \begin{bmatrix} 3 & 6 \\ 6 & 14 \end{bmatrix} \begin{bmatrix} w_0 \\ w_1 \end{bmatrix} = \begin{bmatrix} 10 \\ 23 \end{bmatrix}
+    \begin{bmatrix}
+    3 & 6 \\
+    6 & 14
+    \end{bmatrix}
+    \begin{bmatrix}
+    w_0 \\
+    w_1
+    \end{bmatrix}
+    = \begin{bmatrix}
+    10 \\
+    23
+    \end{bmatrix}
     $$
     
     Solving this system yields $w_0 = -1/3, w_1 = 11/6$.
