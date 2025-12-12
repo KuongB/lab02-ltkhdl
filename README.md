@@ -8,7 +8,7 @@ The core technical challenge and distinguishing feature of this project is the *
 ## 2. Table of Contents
 1. [Project Overview](#1-project-overview)
 2. [Introduction](#3-introduction)
-3. [Dataset](#4-dataset)
+3. [Dataset & Exploratory Analysis](#4-dataset--exploratory-analysis)
 4. [Methodology & Mathematical Foundations](#5-methodology--mathematical-foundations)
 5. [NumPy Techniques Used](#6-numpy-techniques-used)
 6. [Installation & Setup](#7-installation--setup)
@@ -19,6 +19,7 @@ The core technical challenge and distinguishing feature of this project is the *
 11. [Future Improvements](#12-future-improvements)
 12. [Contributors](#13-contributors)
 13. [License](#14-license)
+14. [Acknowledgement](#15-acknowledgement)
 
 ## 3. Introduction
 ### Problem Statement
@@ -68,10 +69,59 @@ I performed extensive EDA (`01_data_exploration.ipynb`) to answer critical busin
 **Q5: How is price distributed?**
 -   **Answer**: Highly **right-skewed**. Most listings are under $200, but the tail extends to $10,000+. This necessitates the Log-transformation used in my modeling phase.
 
-## 5. Methodology & Mathematical Foundations
+### 4.3. Statistical Methodology
+To rigorously validate market differences, I employed **Welch’s t-test** instead of the standard Student’s t-test. This choice is crucial because real-world pricing data between different groups (e.g., Manhattan vs. Brooklyn) rarely satisfies the assumption of equal variances (homoscedasticity).
 
-### 5.1. Feature Engineering (NumPy)
-The preprocessing pipeline (`02_preprocessing.ipynb`) transforms raw CSV data into a clean, numerical matrix $X$:
+**Welch's t-statistic formula breakdown**:
+
+$$
+t = \frac{\bar{X}_1 - \bar{X}_2}{\sqrt{\frac{s_1^2}{N_1} + \frac{s_2^2}{N_2}}}
+$$
+
+Where:
+-   $\bar{X}$ is the sample mean.
+-   $s^2$ is the unbiased sample variance (calculated via `np.var(ddof=1)`).
+-   $N$ is the sample size.
+
+**Decision Logic**:
+Given our large sample size ($N > 1000$), the t-distribution converges to the Standard Normal Distribution ($Z$-distribution).
+-   **Significance Level ($\alpha$)**: 0.05 (95% Confidence).
+-   **Critical Value**: $\approx 1.96$.
+-   **Rule**: If $|t| > 1.96$, we reject the Null Hypothesis ($H_0$), confirming the difference is statistically significant.
+
+### 4.4. Statistical Test Results
+Based on the method above, I conducted 4 key tests using pure NumPy arithmetic:
+
+**Test 1: Location Impact (Manhattan vs. Brooklyn)**
+-   **Hypothesis**:
+    -   $H_0$: The average listing price in Manhattan is equal to Brooklyn ($\mu_M = \mu_B$).
+    -   $H_1$: The average listing price in Manhattan is different from Brooklyn ($\mu_M \neq \mu_B$).
+-   **Arithmetic Optimization**: Calculated variance and standard error using `np.var(ddof=1)` and standard arithmetic operators to avoid library overhead.
+-   **Result**: T-statistic ≈ **30.48**.
+-   **Conclusion**: Since $|t| > 1.96$ ($p < 0.05$), we **reject the Null Hypothesis**. There is a statistically significant price difference, confirming Manhattan is indeed the more expensive market.
+
+**Test 2: Privacy Premium (Entire Home vs. Private Room)**
+-   **Hypothesis**:
+    -   $H_0$: The average listing price of "Entire home/apt" is equal to "Private room" ($\mu_{Entire} = \mu_{Private}$).
+    -   $H_1$: The average prices are distinct ($\mu_{Entire} \neq \mu_{Private}$).
+-   **Result**: T-statistic ≈ **58.67**.
+-   **Conclusion**: With such a high t-score, we **reject the Null Hypothesis** with extreme confidence. This statistically proves that privacy is a major pricing factor, with entire homes commanding a premium of approximately $122 over private rooms.
+
+**Test 3: Rental Duration (Short-term < 7 days vs. Long-term >= 7 days)**
+-   **Hypothesis**:
+    -   $H_0$: The average price of short-term rentals is equal to long-term rentals ($\mu_{Short} = \mu_{Long}$).
+    -   $H_1$: The average prices are different ($\mu_{Short} \neq \mu_{Long}$).
+-   **Result**: T-statistic ≈ **1.81**.
+-   **Conclusion**: Since $|t| < 1.96$ ($p > 0.05$), we **FAIL to reject the Null Hypothesis**. There is statistically insufficient evidence to claim that listing price depends on the minimum stay requirement in this dataset.
+
+**Test 4: Popularity Impact (Low Reviews <= 10 vs. High Reviews > 50)**
+-   **Hypothesis**:
+    -   $H_0$: The average price of low-popularity listings is equal to high-popularity listings ($\mu_{Low} = \mu_{High}$).
+    -   $H_1$: The average prices are different ($\mu_{Low} \neq \mu_{High}$).
+-   **Result**: T-statistic ≈ **5.96**.
+-   **Conclusion**: Since $|t| > 1.96$, we **reject the Null Hypothesis**. Popular listings tend to be slightly cheaper, statistically confirming the negative correlation observed in EDA that lower prices drive higher turnover and more reviews.
+
+## 5. Methodology & Mathematical Foundations
 
 ### 5.1. Feature Engineering (NumPy)
 The preprocessing pipeline (`02_preprocessing.ipynb`) transforms raw CSV data into a clean, numerical matrix $X$:
@@ -145,83 +195,6 @@ In implementation, use **Singular Value Decomposition (SVD)** via `np.linalg.lst
 -   Solve $W = X^+ Y$.
 This approach minimizes the L2-norm of the solution vector, providing a robust solution even for rank-deficient matrices.
 
-**Toy Example**:
-Suppose I have 3 data points $(x, y)$: $(1, 2), (2, 3), (3, 5)$.
-I want to fit $y = w_0 + w_1 x$.
-
-1.  **Construct Matrices**:
-    
-    $$
-    X = \begin{bmatrix}
-    1 & 1 \\
-    1 & 2 \\
-    1 & 3
-    \end{bmatrix}, \quad
-    Y = \begin{bmatrix}
-    2 \\
-    3 \\
-    5
-    \end{bmatrix}
-    $$
-    
-    *(Note: First column of X is 1s for the intercept)*
-
-2.  **Compute $X^T X$**:
-    
-    $$
-    X^T X = \begin{bmatrix}
-    1 & 1 & 1 \\
-    1 & 2 & 3
-    \end{bmatrix}
-    \begin{bmatrix}
-    1 & 1 \\
-    1 & 2 \\
-    1 & 3
-    \end{bmatrix}
-    = \begin{bmatrix}
-    3 & 6 \\
-    6 & 14
-    \end{bmatrix}
-    $$
-
-3.  **Compute $X^T Y$**:
-    
-    $$
-    X^T Y = \begin{bmatrix}
-    1 & 1 & 1 \\
-    1 & 2 & 3
-    \end{bmatrix}
-    \begin{bmatrix}
-    2 \\
-    3 \\
-    5
-    \end{bmatrix}
-    = \begin{bmatrix}
-    10 \\
-    23
-    \end{bmatrix}
-    $$
-
-4.  **Solve Normal Equation** $(X^T X) W = X^T Y$:
-    
-    $$
-    \begin{bmatrix}
-    3 & 6 \\
-    6 & 14
-    \end{bmatrix}
-    \begin{bmatrix}
-    w_0 \\
-    w_1
-    \end{bmatrix}
-    = \begin{bmatrix}
-    10 \\
-    23
-    \end{bmatrix}
-    $$
-    
-    Solving this system yields $w_0 = -1/3, w_1 = 11/6$.
-    Equation: $y = -0.33 + 1.83x$.
-
 ### 5.3. Model 2: Lasso Regression
 **Objective**: Minimize SSE + L1 Penalty to induce sparsity (feature selection).
 
@@ -272,6 +245,7 @@ $$
 Calculated on the *original scale* (after exponentiating the log-predictions) to give a dollar-value error interpretation.
 
 $$
+
 \text{RMSE} = \sqrt{\text{MSE}(e^Y-1, e^{\hat{Y}}-1)}
 $$
 
@@ -289,8 +263,8 @@ This project showcases advanced NumPy capabilities:
 ## 7. Installation & Setup
 1.  **Clone the repository**:
     ```bash
-    git clone <repo_url>
-    cd <repo_name>
+    git clone https://github.com/KuongB/lab02-ltkhdl.git
+    cd lab02-ltkhdl
     ```
 2.  **Create Environment**:
     It is recommended to use a virtual environment.
@@ -305,6 +279,10 @@ This project showcases advanced NumPy capabilities:
     *Core dependencies*: `numpy`, `matplotlib`, `seaborn`. (`scikit-learn` is used only for verification).
 
 ## 8. Usage
+**Prerequisites**:
+-   Download the dataset from [New York City Airbnb Open Data](https://www.kaggle.com/datasets/dgomonov/new-york-city-airbnb-open-data).
+-   Place the file `AB_NYC_2019.csv` into the `data/raw/` directory (create the directory if it doesn't exist).
+
 Run the notebooks in the following order to reproduce the analysis:
 
 1.  **`01_data_exploration.ipynb`**:
@@ -350,8 +328,9 @@ The models were evaluated on an independent 20% test set.
 
 | Model | MSE (Log Scale) | R² Score | RMSE (Original $) |
 |-------|-----------------|----------|-------------------|
-| **OLS (Custom)** | 0.1927 | 0.5319 | $80.38 |
-| **Lasso (Custom)** | 0.1988 | 0.5172 | $81.47 |
+| **OLS (Custom)** | 0.1874 | 0.5362 | $77.28 |
+| **OLS (Sklearn)** | 0.1874 | 0.5362 | $77.28 |
+| **Lasso (Sklearn)** | 0.1874 | 0.5362 | $77.32 |
 
 ### Why Lasso?
 Lasso Regression (Least Absolute Shrinkage and Selection Operator) was chosen as a benchmark comparison because of its unique ability to perform **feature selection**. By adding an L1 penalty term ($\lambda ||W||_1$), Lasso forces the coefficients of irrelevant or redundant features to become exactly zero.
@@ -379,7 +358,11 @@ project/
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_preprocessing.ipynb
 │   └── 03_modeling.ipynb
-└── src/                    # (Optional)
+└── src/                    # Optional
+    ├── __init__.py
+    ├── data_processing.py 
+    ├── models.py           
+    └── visualization.py    
 ```
 
 ## 11. Challenges & Solutions
@@ -396,19 +379,16 @@ project/
 -   Implement **Mini-Batch Gradient Descent** to handle datasets larger than memory.
 
 ## 13. Contributors
--   **Author**: [Your Name/MSSV]
+-   **Author**: [Tran Tien Cuong - 23127332]
 -   **Institution**: VNUHCM - University of Science
 -   **Course**: CSC17104 - Programming for Data Science
 
 ## 14. License
 This project is licensed under the MIT License.
 
-## Assessment Criteria (Reference)
-1.  **Notebook Presentation (10%)**: Clear structure, detailed explanations, and visualizations.
-2.  **GitHub Repository (10%)**: Quality README, logical structure.
-3.  **NumPy Techniques (50%)**:
-    -   Vectorization (No for loops).
-    -   Broadcasting & Ufuncs.
-    -   Fancy Indexing & Masking.
-    -   Mathematical correctness and code efficiency.
-4.  **Analysis & Results (30%)**: Model performance, insights, and visualizations.
+## 15. Acknowledgement
+I would like to express our gratitude to **Dgomonov** for providing the [New York City Airbnb Open Data](https://www.kaggle.com/datasets/dgomonov/new-york-city-airbnb-open-data) on Kaggle, which served as the foundation for this analysis.
+
+Special thanks to the teaching staff of **CSC17104 - Programming for Data Science** at VNUHCM - University of Science for their guidance and course materials.
+
+I also acknowledge the assistance of **Gemini 3 Pro** in correcting README syntax and refining the project content.
