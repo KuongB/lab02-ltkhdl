@@ -307,8 +307,7 @@ This project demonstrates how to replicate a full Data Science pipeline using **
 
 ## 8. Usage
 **Prerequisites**:
--   Download the dataset from [New York City Airbnb Open Data](https://www.kaggle.com/datasets/dgomonov/new-york-city-airbnb-open-data).
--   Place the file `AB_NYC_2019.csv` into the `data/raw/` directory (create the directory if it doesn't exist).
+-   **Dataset**: The dataset is already prepared inside `data/raw/`. If not found, please download it from [New York City Airbnb Open Data](https://www.kaggle.com/datasets/dgomonov/new-york-city-airbnb-open-data) and place `AB_NYC_2019.csv` into the directory.
 
 Run the notebooks in the following order to reproduce the analysis:
 
