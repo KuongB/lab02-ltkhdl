@@ -356,12 +356,45 @@ The models were evaluated on an independent 20% test set.
 | **OLS (Sklearn)** | 0.1874 | 0.5362 | $77.28 |
 | **Lasso (Sklearn)** | 0.1874 | 0.5362 | $77.32 |
 
+### Visualizations
+Key visualizations generated during the analysis (located in `data/images/`):
+
+1.  **Average Price by Borough**:
+    -   *Insight*: Visualizes significant price disparities between boroughs, with Manhattan being the most expensive.
+    <p align="center">
+      <img src="data/images/avg_listing_price_by_Nei_group.png" alt="Average Price by Borough" width="800"/>
+    </p>
+
+2.  **Price Density & Distribution**:
+    -   *Insight*: Highlights the long-tail distribution of prices and the effectiveness of log-transformation.
+    <p align="center">
+      <img src="data/images/density_and_distribution_of_prices.png" alt="Price Density" width="800"/>
+    </p>
+
+3.  **Geospatial Price Map**:
+    -   *Insight*: Maps the listings across NYC, color-coded by price to reveal spatial clusters of high-value properties.
+    <p align="center">
+      <img src="data/images/price_distribution_over_NYC_map.png" alt="Price Map" width="800"/>
+    </p>
+
+4.  **Price vs. Reviews Correlation**:
+    -   *Insight*: A scatter plot examining the relationship (or lack thereof) between listing price and the number of reviews.
+    <p align="center">
+      <img src="data/images/price_number_of_reviews_correlation.png" alt="Price vs Reviews" width="800"/>
+    </p>
+
+5.  **Listing Count (Top 10 Neighbourhoods)**:
+    -   *Insight*: Shows which specific neighbourhoods have the highest supply of listings.
+    <p align="center">
+      <img src="data/images/count_listing_by_top10.png" alt="Top 10 Listings" width="1000"/>
+    </p>
+
 ### Why Lasso?
 Lasso Regression (Least Absolute Shrinkage and Selection Operator) was chosen as a benchmark comparison because of its unique ability to perform **feature selection**. By adding an L1 penalty term ($\lambda ||W||_1$), Lasso forces the coefficients of irrelevant or redundant features to become exactly zero.
 
-Comparing OLS (which uses all features) against Lasso allows us to test the **quality of our feature engineering**:
--   If Lasso significantly outperforms OLS, it implies our dataset contains many noisy or irrelevant features that OLS is overfitting to.
--   If OLS performs similarly to Lasso (as seen above), it suggests that **the selected features are robust and highly relevant**.
+### Comparative Analysis
+-   **OLS vs. Lasso**: The nearly identical $R^2$ scores (0.5362) demonstrate that our manual feature selection was robust. The Lasso model did not need to shrink many coefficients to zero, confirming that our engineered features (like `is_high_value_core`) were statistically significant predictors.
+-   **Error Metrics**: An RMSE of ~$77 is reasonable given the high variance in NYC pricing, where luxury penthouses exist alongside budget rooms. The Mean Squared Error on the log scale (0.1874) confirms consistent performance across orders of magnitude.
 
 ### Conclusion on Feature Engineering
 The similar performance between the unregularized OLS and the L1-regularized Lasso indicates that **the feature engineering process was highly effective**. 
@@ -379,9 +412,9 @@ project/
 │   ├── raw/                # Original AB_NYC_2019.csv
 │   └── processed/          # Processed NumPy-ready CSV
 ├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_preprocessing.ipynb
-│   └── 03_modeling.ipynb
+│   ├── 01_data_exploration.ipynb # EDA, correlation analysis, data visualization,...
+│   ├── 02_preprocessing.ipynb    # NumPy-only Pipeline: cleaning, encoding, scaling,...
+│   └── 03_modeling.ipynb         # Custom OLS implementation vs Sklearn Lasso
 └── src/                    # Optional
     ├── __init__.py
     ├── data_processing.py 
