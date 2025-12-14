@@ -3,7 +3,7 @@
 ## 1. Project Overview
 This project focuses on analyzing and predicting Airbnb listing prices in New York City using the **2019 NYC Airbnb Open Data**. 
 
-The core technical challenge and distinguishing feature of this project is the **exclusive use of NumPy** for the entire data pipeline—including data loading, cleaning, complex feature engineering, and the implementation of machine learning models (Ordinary Least Squares and Lasso Regression) from scratch. High-level libraries like Pandas or Scikit-learn were intentionally avoided for the core logic to demonstrate a deep understanding of vectorized operations, memory management with structured arrays, and the mathematical foundations of regression algorithms.
+The core technical challenge and distinguishing feature of this project is the **exclusive use of NumPy** for the entire data pipeline—including data loading, cleaning, complex feature engineering, and the implementation of **Ordinary Least Squares (OLS) Regression** from scratch. High-level libraries like Pandas or Scikit-learn were intentionally avoided for the core logic to demonstrate a deep understanding of vectorized operations, memory management with structured arrays, and the mathematical foundations of regression algorithms. Scikit-learn is utilized solely for Lasso Regression to provide a benchmark for regularization.
 
 ## 2. Table of Contents
 1. [Project Overview](#1-project-overview)
@@ -19,7 +19,7 @@ The core technical challenge and distinguishing feature of this project is the *
 11. [Future Improvements](#12-future-improvements)
 12. [Contributors](#13-contributors)
 13. [License](#14-license)
-14. [Acknowledgement](#15-acknowledgement)
+14. [Acknowledgements](#15-acknowledgements)
 
 ## 3. Introduction
 ### Problem Statement
@@ -31,11 +31,12 @@ By building a predictive model, we can uncover the latent drivers of listing pri
 ### Objectives
 - Perform Exploratory Data Analysis (EDA) to find pricing trends.
 - Preprocess data using strictly **NumPy** (handling missing values, outliers, encoding).
-- Implement **Linear Regression (OLS)** and **Lasso Regression (Coordinate Descent)** from mathematical first principles.
-- Evaluate models using standard metrics ($MSE$, $R^2$) and compare with Scikit-learn.
+- Implement **Linear Regression (OLS)** from mathematical first principles.
+- Use **Lasso Regression** (via Scikit-learn) to analyze feature importance and regularization effects.
+- Evaluate models using custom **NumPy** metrics ($MSE$, $R^2$) and compare results.
 
 ## 4. Dataset & Exploratory Analysis
-- **Source**: [New York City Airbnb Open Data (Kaggle)](https://www.kaggle.com/dgomonov/new-york-city-airbnb-open-data)
+- **Source**: [New York City Airbnb Open Data (Kaggle)](https://www.kaggle.com/datasets/dgomonov/new-york-city-airbnb-open-data)
 - **File**: `AB_NYC_2019.csv`
 - **Size**: ~49,000 listings, 16 features.
 
@@ -70,7 +71,7 @@ I performed extensive EDA (`01_data_exploration.ipynb`) to answer critical busin
 -   **Answer**: Highly **right-skewed**. Most listings are under $200, but the tail extends to $10,000+. This necessitates the Log-transformation used in my modeling phase.
 
 ### 4.3. Statistical Methodology
-To rigorously validate market differences, I employed **Welch’s t-test** instead of the standard Student’s t-test. This choice is crucial because real-world pricing data between different groups (e.g., Manhattan vs. Brooklyn) rarely satisfies the assumption of equal variances (homoscedasticity).
+To rigorously validate market differences, I employed **Welch’s t-test** instead of the standard Student’s t-test. This choice is crucial because real-world pricing data between different groups (Manhattan vs. Brooklyn,...) rarely satisfies the assumption of equal variances (homoscedasticity).
 
 **Welch's t-statistic formula breakdown**:
 
@@ -195,30 +196,30 @@ In implementation, use **Singular Value Decomposition (SVD)** via `np.linalg.lst
 -   Solve $W = X^+ Y$.
 This approach minimizes the L2-norm of the solution vector, providing a robust solution even for rank-deficient matrices.
 
-### 5.3. Model 2: Lasso Regression
+### 5.3. Model 2: Lasso Regression (Scikit-learn)
 **Objective**: Minimize SSE + L1 Penalty to induce sparsity (feature selection).
 
 $$
 J(W) = \frac{1}{2n} ||Y - XW||^2_2 + \lambda ||W||_1
 $$
 
-Lasso introduces a regularization parameter $\lambda$ that penalizes the absolute magnitude of the regression coefficients. This encourages simple, sparse models by determining which features are truly important.
+Lasso introduces a regularization parameter $\lambda$ that penalizes the absolute magnitude of the regression coefficients. This encourages simple, sparse models by determining which features are truly important. We utilize the Scikit-learn implementation of Lasso to compare against our unregularized OLS model.
 
-### 5.4. Hyperparameter Tuning (Grid Search & K-Fold CV)
-Lasso performance heavily depends on the regularization strength $\lambda$. To find the optimal $\lambda$, I implemented **K-Fold Cross-Validation (K=5)** from scratch:
+### 5.4. K-Fold Cross Validation
+**Logic & Implementation**:
+To robustly estimate model performance, we implemented a **K-Fold Cross-Validation** engine from scratch:
 
 **1. Data Splitting (Fancy Indexing)**:
 I divide the training set indices into $k$ buckets. For each iteration $i \in [0, k-1]$:
 -   **Validation Set**: `indices[i*fold_size : (i+1)*fold_size]`
 -   **Training Set**: `np.concatenate([indices[:i*fold_size], indices[(i+1)*fold_size:]])`
 
-**2. Grid Search Loop**:
--   Define a hyperparameter grid $\Lambda = [0.0001, 0.001, 0.01, 0.1, 1.0]$.
--   For each $\lambda \in \Lambda$:
-    -   Train Lasso on Training Set.
-    -   Predict on Validation Set.
-    -   Compute average MSE across all $k$ folds.
--   Select $\lambda^*$ that minimizes the average Validation MSE.
+**2. Loop**:
+-   Train OLS on Training Set.
+-   Predict on Validation Set.
+-   Compute average MSE across all $k$ folds.
+
+This custom implementation reinforces the understanding of data partitioning and model validation logic using pure NumPy.
 
 ### 5.5. Model Evaluation Metrics
 I implemented the following metrics using pure NumPy vectorization:
@@ -250,15 +251,41 @@ $$
 $$
 
 ## 6. NumPy Techniques Used
-This project showcases advanced NumPy capabilities:
+This project demonstrates how to replicate a full Data Science pipeline using **pure NumPy**, effectively recreating features found in Pandas and Scikit-learn.
 
--   **Structure Arrays (`np.dtype`)**: Used to load mixed-type CSV data (integers, strings, floats) efficiently into a single array, emulating a DataFrame.
--   **Vectorization**: Loops were strictly avoided for data processing.
-    -   *Example*: `np.where(arr == '', '0', arr)` for cleaning.
-    -   *Example*: `data['price_log'] = np.log1p(data['price'])` for transformation.
--   **Broadcasting**: Used in One-Hot Encoding and calculating residuals ($Y - XW$) without manual iteration.
--   **Boolean Masking**: Used for filtering outliers (`data[mask]`) and "loc"-like operations.
--   **Fancy Indexing**: Used in K-Fold Cross-Validation to split data (`indices[val_start:val_end]`).
+### 6.1. Data Structures & Logic
+-   **Structured Arrays (`np.dtype`)**: emulate Pandas DataFrames by enforcing specific types (e.g., `<U100` for strings, `<f8` for floats) for each column in a single compact 1D array.
+    ```python
+    dtype = np.dtype([('price', np.int32), ('neighbourhood', 'U50'), ...])
+    ```
+-   **Vectorized Cleaning**: Replaced Python loops with `np.where` and `np.nan_to_num` for conditional logic.
+    ```python
+    # Example: Replace empty strings with '0' efficiently
+    clean_arr = np.where(arr == '', '0', arr)
+    ```
+
+### 6.2. Advanced Indexing & Manipulation
+-   **Boolean Masking**: Used for filtering rows based on complex conditions (e.g., IQR outlier removal, Geospatial filtering).
+    ```python
+    mask = (data['price_log'] >= lower) & (data['price_log'] <= upper)
+    data_clean = data[mask]
+    ```
+-   **Fancy Indexing**: Used in K-Fold Cross-Validation to create non-contiguous train/validation splits.
+    ```python
+    val_idx = indices[start:end]
+    train_idx = np.concatenate([indices[:start], indices[end:]])
+    ```
+-   **Broadcasting**: Key for efficient arithmetic without loops.
+    -   *Standard Scaling*: `(matrix - mean_vector) / std_vector` broadcasts 1D statistics across the 2D matrix.
+    -   *One-Hot Encoding*: `(column[:, None] == unique_values)` creates a boolean matrix instantly.
+
+### 6.3. Mathematical & Linear Algebra
+-   **Transformation**: `np.log1p` (natural logarithm plus 1) for stabilizing target variance.
+-   **Matrix Operations**:
+    -   `@` operator for matrix multiplication ($X \cdot W$).
+    -   `np.column_stack` and `np.hstack` for assembling the feature matrix $X$ and adding the intercept term.
+-   **Optimization**: `np.linalg.lstsq` fits the Linear Regression model using Singular Value Decomposition (SVD), ensuring numerical stability even when the matrix $X^T X$ is close to singular (non-invertible) due to multicollinearity.
+
 
 ## 7. Installation & Setup
 1.  **Clone the repository**:
@@ -286,42 +313,40 @@ This project showcases advanced NumPy capabilities:
 Run the notebooks in the following order to reproduce the analysis:
 
 1.  **`01_data_exploration.ipynb`**:
-    -   **Library Import**: Loads necessary libraries (`numpy`, `pandas` solely for initial peek, `matplotlib`, `seaborn`).
-    -   **Data Loading**: Reads `AB_NYC_2019.csv` into a Pandas DataFrame for easy visualization.
-    -   **Univariate Analysis**: Plots histograms for `price` (showing skewness) and other numerical features.
-    -   **Bivariate Analysis**:
-        -   Scatter plots: `price` vs `reviews`, `price` vs `availability`.
-        -   Box plots: `price` distribution across `neighbourhood_group` and `room_type`.
-    -   **Heatmap**: Computes and displays the Correlation Matrix to identify potential predictors.
-    -   **Geospatial Plot**: Visualizes listings on a map of NYC using latitude/longitude, color-coded by price.
+    -   **Pure NumPy Data Loading**: Reads the CSV file using Python's `csv` module and converts it into a NumPy array of objects, strictly avoiding Pandas.
+    -   **Data Inspection**: Manually parses headers and checks data types for the first few rows to understand the structure.
+    -   **Vectorized Aggregation**: Implements custom aggregation logic using `np.unique` (with `return_inverse=True`) and `np.bincount` to calculate average prices by borough without loops.
+    -   **Distribution Analysis**: Uses `seaborn` (fed by NumPy arrays) to visualize the price distribution and identify the need for log-transformation.
+    -   **Correlation Analysis**: Manually encodes categorical variables to compute a correlation matrix using `np.corrcoef`, visualizing relationships with a heatmap.
+    -   **Geospatial Visualization**: Plots listings on a scatter plot using longitude and latitude to reveal price clusters in Manhattan and Brooklyn.
 
-2.  **`02_preprocessing.ipynb`** (NumPy Pipeline):
-    -   **Structured Array Loading**: Reads raw CSV using `csv` module and converts it into a NumPy Structured Array with custom dtypes (e.g., `U100`, `int32`, `float64`).
-    -   **Missing Value Imputation**:
-        -   Fills `reviews_per_month` NaNs with 0.
-        -   Handles empty strings in categorical columns.
-    -   **Outlier Removal**: Calculates IQR for log-price and removes extreme outliers.
+2.  **`02_preprocessing.ipynb`** (The NumPy Pipeline):
+    -   **Structured Array Conversion**: Defines a explicit `np.dtype` (e.g., `U100`, `int32`, `float64`) to enforce types and enable memory-efficient storage of mixed data.
+    -   **Vectorized Cleaning**:
+        -   Uses `np.where` to handle empty strings and replace them with `0` or `NaT`.
+        -   Fills `NaN` values in `reviews_per_month` using `np.nan_to_num`.
+    -   **Outlier Removal**: Implements the IQR method on log-transformed prices using boolean masking to filter out extreme anomalies ($> 1.5 \times IQR$).
     -   **Feature Engineering**:
-        -   **Log-Transform**: Applies `np.log1p` to `price`.
-        -   **Interaction Terms**: Creates `interaction_nights_reviews`.
-        -   **Spatial Feature**: Creates `is_high_value_core`.
-    -   **One-Hot Encoding**: Manually implements one-hot logic for `neighbourhood_group` and `room_type`, creating binary columns.
-    -   **Standard Scaling**: Manually calculates $\mu$ and $\sigma$ for each feature and applies Z-score normalization.
-    -   **Saving**: Exports the processed matrix to `data/processed/airbnb_processed.csv`.
+        -   **Log-Transform**: Applies `np.log1p` to the target `price` to normalize the distribution.
+        -   **Interaction Terms**: creating `interaction_nights_reviews` (minimum_nights × reviews_per_month).
+        -   **Spatial Features**: Creates `is_high_value_core` boolean feature for downtown locations.
+    -   **One-Hot Encoding**: Manually implements one-hot encoding for `neighbourhood_group` and `room_type` using broadcasting comparisons, generating 0/1 float columns.
+    -   **Standard Scaling**: Manually computes mean and standard deviation for numerical columns and applies Z-score normalization $(X - \mu) / \sigma$.
+    -   **Export**: Saves the final processed 2D matrix to `data/processed/airbnb_processed.csv`.
 
-3.  **`03_modeling.ipynb`** (Model Training & Evaluation):
-    -   **Data Splitting**: Shuffles data indices and splits into 80% Train and 20% Test sets.
-    -   **Model Implementation**:
-        -   Defines `train_linear_regression(X, Y)` using `np.linalg.lstsq`.
-        -   Defines `train_lasso_regression(X, Y)` using Coordinate Descent loop and soft-thresholding function.
-    -   **Hyperparameter Tuning**:
-        -   Implements `k_fold_cross_validation` function.
-        -   Runs `grid_search` to find best $\lambda$ for Lasso.
-    -   **Final Evaluation**:
-        -   Trains optimized models on the full training set.
-        -   Predicts on the hold-out test set.
-        -   Calculates MSE, R2, and RMSE.
-    -   **Verification**: Imports `sklearn.linear_model` to train reference models and compares coefficients/metrics to validate the custom NumPy implementation accuracy.
+3.  **`03_modeling.ipynb`** (Training & Evaluation):
+    -   **Custom Data Splitting**: Implements a shuffling mechanism using `np.random.shuffle` on indices to create an 80/20 Train-Test split without `sklearn`.
+    -   **OLS Implementation**:
+        -   Uses the Normal Equation approach solved via SVD (`np.linalg.lstsq`) to ensure numerical stability.
+        -   Manually adds an intercept column (`np.ones`) using `np.hstack`.
+    -   **K-Fold Cross-Validation**:
+        -   Builds a custom CV engine that slices data into $K=5$ folds using fancy indexing.
+        -   Iteratively trains OLS on $K-1$ folds and validates on the remaining fold to check model robustness.
+    -   **Model Evaluation**:
+        -   Trains the final OLS model on the full training set.
+        -   Uses **Scikit-learn's Lasso** as a benchmark for feature selection and regularization comparison.
+        -   Calculates **MSE**, **RMSE** (dollar error), and **$R^2$** using custom functions built with simple NumPy array operations (`np.mean`, `np.sum`).
+    -   **Verification**: Compares the custom OLS coefficients and metrics against `sklearn.linear_model.LinearRegression` to prove implementation correctness.
 
 ## 9. Results & Analysis
 The models were evaluated on an independent 20% test set.
@@ -368,14 +393,16 @@ project/
 ## 11. Challenges & Solutions
 1.  **Loading Mixed Data**: NumPy standard arrays require a single type.
     -   *Solution*: Used **Nx1 Structured Arrays** with a custom `dtype` to handle strings and numbers side-by-side, preserving memory efficiency.
-2.  **Numerical Stability**: Calculating $(X^T X)^{-1}$ resulted in singular matrix errors due to multicollinearity.
+2.  **CSV Parsing with Quoted Fields**: Using `np.genfromtxt` or `np.loadtxt` failed because some fields (like listing names) contained commas inside double quotes (e.g., "Apartment, near park"), which NumPy treated as delimiters.
+    -   *Solution*: Utilized Python's built-in `csv` module to correctly parse the quoted strings first, then converted the resulting list of rows into a NumPy structured array.
+3.  **Numerical Stability**: Calculating $(X^T X)^{-1}$ resulted in singular matrix errors due to multicollinearity.
     -   *Solution*: Switched to `np.linalg.lstsq` (SVD-based) and introduced L1 regularization (Lasso) to handle correlated features.
 3.  **Lasso Convergence**: Subgradient descent oscillates if not tuned.
-    -   *Solution*: Adopted the **Coordinate Descent** algorithm with Soft Thresholding, which is faster and more stable for L1 problems.
+    -   *Solution*: Opted to use Scikit-learn's robust coordinate descent implementation for the Lasso benchmark to focus the "from-scratch" efforts on the core OLS and metric implementations.
 
 ## 12. Future Improvements
 -   Implement **Ridge Regression (L2)** and **ElasticNet** for comparison.
--   Add **Polynomial Features** (degree=2) to capture more non-linear interactions.
+-   Add **Polynomial Features** (degree>=2) to capture more non-linear interactions.
 -   Implement **Mini-Batch Gradient Descent** to handle datasets larger than memory.
 
 ## 13. Contributors
@@ -386,7 +413,7 @@ project/
 ## 14. License
 This project is licensed under the MIT License.
 
-## 15. Acknowledgement
+## 15. Acknowledgements
 I would like to express our gratitude to **Dgomonov** for providing the [New York City Airbnb Open Data](https://www.kaggle.com/datasets/dgomonov/new-york-city-airbnb-open-data) on Kaggle, which served as the foundation for this analysis.
 
 Special thanks to the teaching staff of **CSC17104 - Programming for Data Science** at VNUHCM - University of Science for their guidance and course materials.
