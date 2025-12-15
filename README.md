@@ -7,19 +7,20 @@ The core technical challenge and distinguishing feature of this project is the *
 
 ## 2. Table of Contents
 1. [Project Overview](#1-project-overview)
-2. [Introduction](#3-introduction)
-3. [Dataset & Exploratory Analysis](#4-dataset--exploratory-analysis)
-4. [Methodology & Mathematical Foundations](#5-methodology--mathematical-foundations)
-5. [NumPy Techniques Used](#6-numpy-techniques-used)
-6. [Installation & Setup](#7-installation--setup)
-7. [Usage](#8-usage)
-8. [Results & Analysis](#9-results--analysis)
-9. [Project Structure](#10-project-structure)
-10. [Challenges & Solutions](#11-challenges--solutions)
-11. [Future Improvements](#12-future-improvements)
-12. [Contributors](#13-contributors)
-13. [License](#14-license)
-14. [Acknowledgements](#15-acknowledgements)
+2. [Table of Contents](#2-table-of-contents)
+3. [Introduction](#3-introduction)
+4. [Dataset & Exploratory Analysis](#4-dataset--exploratory-analysis)
+5. [Methodology & Mathematical Foundations](#5-methodology--mathematical-foundations)
+6. [NumPy Techniques Used](#6-numpy-techniques-used)
+7. [Installation & Setup](#7-installation--setup)
+8. [Usage](#8-usage)
+9. [Results & Analysis](#9-results--analysis)
+10. [Project Structure](#10-project-structure)
+11. [Challenges & Solutions](#11-challenges--solutions)
+12. [Future Improvements](#12-future-improvements)
+13. [Contributors](#13-contributors)
+14. [License](#14-license)
+15. [Acknowledgements](#15-acknowledgements)
 
 ## 3. Introduction
 ### Problem Statement
@@ -52,7 +53,7 @@ By building a predictive model, we can uncover the latent drivers of listing pri
 
 *Other features included in the dataset: `id`, `name`, `host_id`, `host_name`, `neighbourhood`, `latitude`, `longitude`, `last_review`, `reviews_per_month`, `calculated_host_listings_count`.*
 
-### 4.2. Key Questions & Insights
+### 4.2. Key Questions
 I performed extensive EDA (`01_data_exploration.ipynb`) to answer critical business questions:
 
 **Q1: How does location influence price?**
@@ -122,7 +123,7 @@ Based on the method above, I conducted 4 key tests using pure NumPy arithmetic:
 -   **Result**: T-statistic ≈ **5.96**.
 -   **Conclusion**: Since $|t| > 1.96$, we **reject the Null Hypothesis**. Popular listings tend to be slightly cheaper, statistically confirming the negative correlation observed in EDA that lower prices drive higher turnover and more reviews.
 
-## 5. Methodology & Mathematical Foundations
+## 5. Methodology
 
 ### 5.1. Feature Engineering (NumPy)
 The preprocessing pipeline (`02_preprocessing.ipynb`) transforms raw CSV data into a clean, numerical matrix $X$:
@@ -348,15 +349,9 @@ Run the notebooks in the following order to reproduce the analysis:
     -   **Verification**: Compares the custom OLS coefficients and metrics against `sklearn.linear_model.LinearRegression` to prove implementation correctness.
 
 ## 9. Results & Analysis
-The models were evaluated on an independent 20% test set.
 
-| Model | MSE (Log Scale) | R² Score | RMSE (Original $) |
-|-------|-----------------|----------|-------------------|
-| **OLS (Custom)** | 0.1874 | 0.5362 | $77.28 |
-| **OLS (Sklearn)** | 0.1874 | 0.5362 | $77.28 |
-| **Lasso (Sklearn)** | 0.1874 | 0.5362 | $77.32 |
 
-### Visualizations
+### 9.1 Visualizations
 Key visualizations generated during the analysis (located in `data/images/`):
 
 1.  **Average Price by Borough**:
@@ -388,6 +383,16 @@ Key visualizations generated during the analysis (located in `data/images/`):
     <p align="center">
       <img src="data/images/count_listing_by_top10.png" alt="Top 10 Listings" width="1000"/>
     </p>
+
+### 9.2 Model Evaluation
+
+The models were evaluated on an independent 20% test set.
+
+| Model | MSE (Log Scale) | R² Score | RMSE (Original $) |
+|-------|-----------------|----------|-------------------|
+| **OLS (Custom)** | 0.1874 | 0.5362 | $77.28 |
+| **OLS (Sklearn)** | 0.1874 | 0.5362 | $77.28 |
+| **Lasso (Sklearn)** | 0.1874 | 0.5362 | $77.32 |
 
 ### Why Lasso?
 Lasso Regression (Least Absolute Shrinkage and Selection Operator) was chosen as a benchmark comparison because of its unique ability to perform **feature selection**. By adding an L1 penalty term ($\lambda ||W||_1$), Lasso forces the coefficients of irrelevant or redundant features to become exactly zero.
@@ -441,6 +446,8 @@ project/
 -   **Author**: [Tran Tien Cuong - 23127332]
 -   **Institution**: VNUHCM - University of Science
 -   **Course**: CSC17104 - Programming for Data Science
+
+If you want to contact me, please send an email to ttcuong23@clc.fitus.edu.vn
 
 ## 14. License
 This project is licensed under the MIT License.
