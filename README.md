@@ -10,7 +10,7 @@ The core technical challenge and distinguishing feature of this project is the *
 2. [Table of Contents](#2-table-of-contents)
 3. [Introduction](#3-introduction)
 4. [Dataset & Exploratory Analysis](#4-dataset--exploratory-analysis)
-5. [Methodology & Mathematical Foundations](#5-methodology--mathematical-foundations)
+5. [Methodology](#5-methodology)
 6. [NumPy Techniques Used](#6-numpy-techniques-used)
 7. [Installation & Setup](#7-installation--setup)
 8. [Usage](#8-usage)
